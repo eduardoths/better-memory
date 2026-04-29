@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api/client';
 import { CardRenderer } from '../components/CardRenderer';
@@ -30,6 +30,11 @@ export function Study() {
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [tally, setTally] = useState({ again: 0, hard: 0, good: 0, easy: 0 });
+
+  // Optional answer input
+  const [answerOpen, setAnswerOpen] = useState(false);
+  const [userAnswer, setUserAnswer] = useState('');
+  const answerRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (!deckId) return;
@@ -66,6 +71,8 @@ export function Study() {
       } else {
         setCurrent((c) => c + 1);
         setFlipped(false);
+        setUserAnswer('');
+        setAnswerOpen(false);
       }
       setSubmitting(false);
     },
@@ -75,11 +82,12 @@ export function Study() {
   // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === ' ' || e.key === 'Enter') {
+      const isTyping = document.activeElement === answerRef.current;
+      if ((e.key === ' ' || e.key === 'Enter') && !isTyping) {
         e.preventDefault();
         if (!flipped) flip();
       }
-      if (flipped && !submitting) {
+      if (flipped && !submitting && !isTyping) {
         if (e.key === '1') rate(0);
         if (e.key === '2') rate(1);
         if (e.key === '3') rate(2);
@@ -202,6 +210,48 @@ export function Study() {
         </div>
       </div>
 
+      {/* Answer input (optional, pre-flip) */}
+      {!flipped && (
+        <div className="mb-4">
+          {!answerOpen ? (
+            <button
+              onClick={() => { setAnswerOpen(true); setTimeout(() => answerRef.current?.focus(), 50); }}
+              className="w-full py-2 text-sm text-gray-300 hover:text-gray-400 border border-dashed border-gray-200 hover:border-gray-300 rounded-xl transition-colors"
+            >
+              ✏️ Type your answer <span className="text-xs opacity-60">(optional)</span>
+            </button>
+          ) : (
+            <div className="border border-gray-200 rounded-xl overflow-hidden">
+              <div className="flex items-center justify-between px-3 py-1.5 bg-gray-50 border-b border-gray-100">
+                <span className="text-xs text-gray-400 font-medium">Your answer</span>
+                <button
+                  onClick={() => { setAnswerOpen(false); setUserAnswer(''); }}
+                  className="text-xs text-gray-300 hover:text-gray-500"
+                >
+                  ✕
+                </button>
+              </div>
+              <textarea
+                ref={answerRef}
+                value={userAnswer}
+                onChange={(e) => setUserAnswer(e.target.value)}
+                rows={3}
+                placeholder={card.backType === 'MIXED' ? 'Type your answer — $LaTeX$ supported' : 'Type your answer…'}
+                spellCheck={false}
+                className={`w-full px-3 py-2.5 text-sm focus:outline-none resize-none ${card.backType === 'MIXED' ? 'font-mono' : ''}`}
+              />
+              {/* Live LaTeX preview */}
+              {card.backType === 'MIXED' && userAnswer.trim() && (
+                <div className="border-t border-purple-100 bg-purple-50 px-3 py-2.5">
+                  <div className="text-xs text-purple-300 mb-1">Preview</div>
+                  <CardRenderer content={userAnswer} type="MIXED" className="text-left text-sm" />
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Hint / Rating */}
       {!flipped ? (
         <p className="text-center text-gray-300 text-sm">
@@ -209,7 +259,23 @@ export function Study() {
         </p>
       ) : (
         <div className="space-y-3">
-          <p className="text-center text-xs text-gray-400 mb-1">How well did you remember?</p>
+          {/* User's typed answer (shown after flip) */}
+          {answerOpen && (
+            <div className="border border-gray-100 rounded-xl overflow-hidden">
+              <div className="px-3 py-1.5 bg-gray-50 border-b border-gray-100">
+                <span className="text-xs text-gray-400 font-medium">Your answer</span>
+              </div>
+              <div className="px-3 py-2.5 min-h-[48px] bg-white">
+                {userAnswer.trim() ? (
+                  <CardRenderer content={userAnswer} type={card.backType} className="text-left text-sm text-gray-700" />
+                ) : (
+                  <span className="text-sm text-gray-300 italic">— nothing typed —</span>
+                )}
+              </div>
+            </div>
+          )}
+
+          <p className="text-center text-xs text-gray-400">How well did you remember?</p>
           <div className="grid grid-cols-4 gap-2">
             {RATINGS.map((r, i) => (
               <button
