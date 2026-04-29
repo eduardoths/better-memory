@@ -1,0 +1,16 @@
+{
+  "name": "BetterMemory",
+  "short_name": "BetterMemory",
+  "description": "Spaced repetition flashcard app",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f9fafb",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Deck {
+  id               String   @id @default(cuid())
+  name             String
+  description      String?
+  newCardsPerDay   Int      @default(20)
+  maxReviewsPerDay Int      @default(200)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  cards            Card[]
+}
+
+model Card {
+  id        String      @id @default(cuid())
+  deckId    String
+  front     String
+  back      String
+  backType  ContentType @default(TEXT)
+  imageUrl  String?     // optional image on the back
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  deck      Deck        @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  schedule  CardSchedule?
+  reviews   Review[]
+}
+
+model CardSchedule {
+  id          String    @id @default(cuid())
+  cardId      String    @unique
+  dueDate     DateTime  @default(now())
+  interval    Int       @default(0)
+  easeFactor  Float     @default(2.5)
+  repetitions Int       @default(0)
+  state       CardState @default(NEW)
+  card        Card      @relation(fields: [cardId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  cardId     String
+  rating     Int      // 0=Again, 1=Hard, 2=Good, 3=Easy
+  reviewedAt DateTime @default(now())
+  card       Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+}
+
+enum ContentType {
+  TEXT
+  LATEX
+  MIXED
+}
+
+enum CardState {
+  NEW
+  LEARNING
+  REVIEW
+  RELEARNING
+}
