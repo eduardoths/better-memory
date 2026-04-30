@@ -64,6 +64,9 @@ router.get('/:deckId', async (req: Request, res: Response) => {
       backType: c.backType,
       imageUrl: c.imageUrl,
       state: c.schedule?.state ?? 'NEW',
+      interval: c.schedule?.interval ?? 0,
+      easeFactor: c.schedule?.easeFactor ?? 2.5,
+      repetitions: c.schedule?.repetitions ?? 0,
     }));
 
     res.json({

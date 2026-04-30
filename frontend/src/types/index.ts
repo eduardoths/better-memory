@@ -44,6 +44,9 @@ export interface StudyCard {
   backType: ContentType;
   imageUrl?: string | null;
   state: CardState;
+  interval: number;
+  easeFactor: number;
+  repetitions: number;
 }
 
 export interface StudySession {

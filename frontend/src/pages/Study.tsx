@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api/client';
 import { CardRenderer } from '../components/CardRenderer';
 import type { Rating, StudyCard, StudySession } from '../types';
+import { formatDays, previewIntervals } from '../utils/sm2Preview';
 
 const RATINGS: { label: string; key: string; color: string; bg: string }[] = [
   { label: 'Again', key: '1', color: 'text-red-600', bg: 'bg-red-50 border-red-200 hover:bg-red-100 active:bg-red-200' },
@@ -277,17 +278,21 @@ export function Study() {
 
           <p className="text-center text-xs text-gray-400">How well did you remember?</p>
           <div className="grid grid-cols-4 gap-2">
-            {RATINGS.map((r, i) => (
-              <button
-                key={r.label}
-                onClick={() => rate(i as Rating)}
-                disabled={submitting}
-                className={`flex flex-col items-center py-3 px-1 border rounded-xl text-sm font-medium transition-colors disabled:opacity-40 ${r.bg} ${r.color}`}
-              >
-                <span>{r.label}</span>
-                <span className="text-xs opacity-50 mt-0.5">[{r.key}]</span>
-              </button>
-            ))}
+            {(() => {
+              const intervals = previewIntervals(card.state, card.interval, card.easeFactor, card.repetitions);
+              return RATINGS.map((r, i) => (
+                <button
+                  key={r.label}
+                  onClick={() => rate(i as Rating)}
+                  disabled={submitting}
+                  className={`flex flex-col items-center py-3 px-1 border rounded-xl text-sm font-medium transition-colors disabled:opacity-40 ${r.bg} ${r.color}`}
+                >
+                  <span>{r.label}</span>
+                  <span className="text-xs opacity-50 mt-0.5">[{r.key}]</span>
+                  <span className="text-xs opacity-60 mt-1 font-normal">{formatDays(intervals[i])}</span>
+                </button>
+              ));
+            })()}
           </div>
 
           {/* Rating guide */}
